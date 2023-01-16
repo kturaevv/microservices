@@ -1,0 +1,114 @@
+version: '3'
+
+services:
+
+    parser:
+        build:
+            context: ./parser
+            dockerfile: parser.Dockerfile
+        container_name: parser
+        command: ["python3", "main.py"]
+        depends_on:
+            - app
+        networks:
+            - app-net
+        environment:
+            - Q_IMAGE_PROCESSING
+            - RABBITMQ_HOST
+            - RABBITMQ_PORT
+    
+    app:
+        build:
+            context: ./api
+            dockerfile: api.Dockerfile
+        container_name: app
+        command: ["./docker-entrypoint.sh" ]
+        restart: always
+        deploy:
+            restart_policy:
+                condition: on-failure
+                delay: 3s
+                max_attempts: 5
+                window: 60s
+        depends_on:
+            - rabbitmq
+            - celery
+        networks:
+            - app-net
+        ports:
+            - '8000:8000'
+        # depends_on:
+        #     - postgresdb
+        # environment:
+        #     - POSTGRES_DATABASE
+        #     - POSTGRES_USERNAME
+        #     - POSTGRES_PASSWORD
+        #     - POSTGRES_HOST
+        #     - POSTGRES_PORT
+
+    rabbitmq:
+        hostname: my-rabbit
+        container_name: rabbit
+        image: rabbitmq:3-alpine
+        restart: always
+        networks:
+            - app-net
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        volumes:
+            - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      
+    celery:
+        build:
+            context: ./worker_celery
+            dockerfile: celery.Dockerfile
+        container_name: worker
+        restart: always
+        networks:
+            - app-net
+        depends_on:
+            - rabbitmq
+        environment:
+            - RABBITMQ_HOST
+            - RABBITMQ_PORT
+            - Q_IMAGE_PROCESSING
+            - RABBITMQ_USERNAME=guest
+            - RABBITMQ_PASSWORD=guest
+    
+    rabbit_worker:
+        build:
+            context: ./worker_rabbit
+            dockerfile: rw.Dockerfile
+        container_name: rw
+        command: ["python3", "main.py"]
+        depends_on:
+            - rabbitmq
+        networks:
+            - app-net
+        environment:
+            - Q_IMAGE_PROCESSING
+            - RABBITMQ_HOST
+            - RABBITMQ_PORT
+
+    # postgresdb:
+    #     container_name: postgres
+    #     image: postgres:15-alpine
+    #     networks:
+    #         - app-net
+    #     volumes: 
+    #         - sample_db:/var/lib/postgresql/data
+    #     ports:
+    #         - '5435:5432'
+    #     environment:
+    #         - POSTGRES_USERNAME
+    #         - POSTGRES_PASSWORD
+    #         - POSTGRES_DATABASE
+
+
+# volumes:
+#     sample_db:
+
+networks:
+    app-net:
+        driver: bridge
