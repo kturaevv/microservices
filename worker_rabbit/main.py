@@ -1,13 +1,24 @@
 import sys, os, pika, logging
 
 RABBITMQ_HOST=os.environ.get("RABBITMQ_HOST")
-Q = os.environ.get("Q_IMAGE_PROCESSING")
+IMAGE_EXCHANGE = os.environ.get("IMAGE_EXCHANGE")
+IMAGE_ROUTING_KEY = os.environ.get("IMAGE_ROUTING_KEY")
+Q = os.environ.get("IMAGE_QUEUE")
 
 # Connect to RabbitMQ
 conn = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
 channel = conn.channel()
+
+channel.exchange_declare(
+        exchange=IMAGE_EXCHANGE, exchange_type='topic')
 # Create Q if not exists
 channel.queue_declare(queue=Q, durable=True)
+# Bind Q to specific topic
+channel.queue_bind(
+    queue=Q, 
+    exchange=IMAGE_EXCHANGE, 
+    routing_key=IMAGE_ROUTING_KEY
+)
 
 FORMAT = '%(asctime)s - %(levelname)s: %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)

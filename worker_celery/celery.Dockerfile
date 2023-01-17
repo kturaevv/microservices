@@ -10,4 +10,4 @@ WORKDIR ./usr/src
 
 COPY . ./worker
 
-CMD celery -A worker.worker worker --loglevel=INFO -Q $Q_IMAGE_PROCESSING
+CMD celery -A worker.worker worker --loglevel=INFO

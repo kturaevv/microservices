@@ -1,4 +1,4 @@
-import pika, os
+import pika, os, uuid
 
 RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
 RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
@@ -24,18 +24,41 @@ def send_to_qu(msg: str):
         routing_key=IMAGE_ROUTING_KEY
     )
     
+    message, headers, props = celery_message(msg, task='tasks.process_img')
+
     # send msg to queue
     channel.basic_publish(
         exchange=IMAGE_EXCHANGE,
         routing_key=IMAGE_ROUTING_KEY,
-        body=msg,
+        body=message,
         properties= pika.BasicProperties(
+            **props,
+            headers = headers,
             delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-        )
+        ),
     )
     print('[client] sent an image path ...')
     # close conn to ensure successful delivery
     conn.close()
+import socket, json
+
+def celery_message(args, task):
+    task_id = str(uuid.uuid4())
+    properties = {
+        'correlation_id':task_id,
+        'content_type': 'application/json',
+        'content_encoding':'utf-8'
+    }
+    header2 = {
+        'task':task,
+        'id':task_id,
+        'origin': '@'.join([str(os.getpid()), socket.gethostname()])
+    }
+    message = []
+    message.append(args)
+    message.append({})
+    message.append({})
+    return json.dumps(message), header2, properties
 
 if __name__ == '__main__':
     RABBITMQ_HOST='localhost'

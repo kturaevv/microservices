@@ -31,8 +31,8 @@ def test_task(complexity):
     time.sleep(int(complexity))
     return {"Success":complexity}
 
-@celery.task(name='process_img')
-def process_img(img):
-    logging.info("CELERY TASK IMAGE RECEIVED ", img)
+@celery.task()
+def process_img(*args, **kwargs):
+    logging.info("CELERY TASK IMAGE RECEIVED ", args, kwargs)
 
     

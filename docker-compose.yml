@@ -14,7 +14,9 @@ services:
         networks:
             - basenet
         environment:
-            - Q_IMAGE_PROCESSING
+            - IMAGE_QUEUE
+            - IMAGE_ROUTING_KEY
+            - IMAGE_EXCHANGE
             - RABBITMQ_HOST
             - RABBITMQ_PORT
     
@@ -79,25 +81,11 @@ services:
         environment:
             - RABBITMQ_HOST
             - RABBITMQ_PORT
-            - Q_IMAGE_PROCESSING
+            - IMAGE_EXCHANGE
+            - IMAGE_QUEUE
+            - IMAGE_ROUTING_KEY
             - RABBITMQ_USERNAME=guest
             - RABBITMQ_PASSWORD=guest
-    
-    rabbit_worker:
-        build:
-            context: ./worker_rabbit
-            dockerfile: rw.Dockerfile
-        container_name: rw
-        command: ["python3", "main.py"]
-        depends_on:
-            - rabbitmq
-        networks:
-            - basenet
-        environment:
-            - Q_IMAGE_PROCESSING
-            - RABBITMQ_HOST
-            - RABBITMQ_PORT
-        restart: always
         
     # postgresdb:
     #     container_name: postgres
