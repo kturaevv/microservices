@@ -1,8 +1,7 @@
 import sys, os, pika, logging
 
-from client import Q
-
 RABBITMQ_HOST=os.environ.get("RABBITMQ_HOST")
+Q = os.environ.get("Q_IMAGE_PROCESSING")
 
 # Connect to RabbitMQ
 conn = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))

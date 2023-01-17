@@ -4,4 +4,6 @@ WORKDIR /usr/src/app
 RUN mkdir data && \
     pip3 install --no-cache-dir requests pika
 
-COPY main.py .
+COPY . .
+
+CMD ["python3", "main.py"]
