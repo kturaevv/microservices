@@ -2,23 +2,22 @@ version: '3'
 
 services:
 
-    parser:
-        build:
-            context: ./parser
-            dockerfile: parser.Dockerfile
-        container_name: parser
-        command: ["python3", "main.py"]
-        depends_on:
-            - rabbitmq
-            - app
-        networks:
-            - basenet
-        environment:
-            - IMAGE_QUEUE
-            - IMAGE_ROUTING_KEY
-            - IMAGE_EXCHANGE
-            - RABBITMQ_HOST
-            - RABBITMQ_PORT
+    # parser:
+    #     build:
+    #         context: ./parser
+    #         dockerfile: parser.Dockerfile
+    #     container_name: parser
+    #     command: ["python3", "main.py"]
+    #     depends_on:
+    #         - app
+    #     networks:
+    #         - basenet
+    #     environment:
+    #         - IMAGE_QUEUE
+    #         - IMAGE_ROUTING_KEY
+    #         - IMAGE_EXCHANGE
+    #         - RABBITMQ_HOST
+    #         - RABBITMQ_PORT
     
     app:
         build:
@@ -40,7 +39,6 @@ services:
             start_period: 30s
             retries: 3
         depends_on:
-            - rabbitmq
             - celery
         networks:
             - basenet
@@ -70,7 +68,7 @@ services:
               
     celery:
         build:
-            context: ./worker_celery
+            context: ./worker
             dockerfile: celery.Dockerfile
         container_name: worker
         restart: always

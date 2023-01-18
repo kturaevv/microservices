@@ -1,4 +1,5 @@
-from .worker import celery
+from .celery_worker import app
+
 from celery import Task
 
 import time, logging
@@ -22,17 +23,16 @@ class CustombaseTask(Task):
         return self._custom
 
 
-@celery.task(base=CustombaseTask)
+@app.task(base=CustombaseTask)
 def custom_base():
     return custom_base.custom
 
-@celery.task(name='test')
+@app.task(name='test')
 def test_task(complexity):
     time.sleep(int(complexity))
     return {"Success":complexity}
 
-@celery.task()
-def process_img(*args, **kwargs):
-    logging.info("CELERY TASK IMAGE RECEIVED ", args, kwargs)
-
-    
+@app.task
+def process_img(image_path):
+    logging.info("[celery] Received %r" % image_path)
+    return 1
