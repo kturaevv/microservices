@@ -2,10 +2,10 @@ from .celery_worker import app
 
 from celery import Task
 
-import time, logging
+import time, logging, requests, sys
 
 FORMAT = '%(asctime)s - %(levelname)s: %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.INFO)
+logging.basicConfig(format=FORMAT, level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
 
 
 class BaseTask(Task):
@@ -35,4 +35,4 @@ def test_task(complexity):
 @app.task
 def process_img(image_path):
     logging.info("[celery] Received %r" % image_path)
-    return 1
+    requests.get("http://app:8000/")

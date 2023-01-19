@@ -33,8 +33,6 @@ def main():
         logging.info("[consumer] Received %r" % body)
         msg = body.decode("utf-8")
         task = process_img.delay(msg)
-        if task.get(timeout=3) == 1:
-            logging.info("[consumer] Task completed successfully!")
 
     # indicate LB policy
     channel.basic_qos(prefetch_count=1)
