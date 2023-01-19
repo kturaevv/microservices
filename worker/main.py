@@ -30,7 +30,7 @@ class CustomConsumer(bootsteps.ConsumerStep):
                          )]
 
     def handle_message(self, body, message):
-        logging.log(f'[consumer] Received {body}')
+        logging.info(f'[consumer] Received {body}')
         process_img.delay(body)
         message.ack()
 
