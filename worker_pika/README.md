@@ -4,3 +4,10 @@ Celery runs as a daemon (background process), while Pika consumes messages from 
 
  Celery daemonization is performed by [celeryd](https://docs.celeryq.dev/en/latest/userguide/daemonizing.html#init-script-celeryd)
 
+Run as a standalone service with:
+```sh
+# Build and run
+make up
+# Teardown
+make down
+```
