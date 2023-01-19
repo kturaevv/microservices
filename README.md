@@ -8,7 +8,7 @@ Start the project with:
 make up
 ```
 
-Send message to qu with:
+Send message to queue with:
 ```
 # Update env variables if needed
 export $(cat .env.compose)
