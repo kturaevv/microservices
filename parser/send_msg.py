@@ -1,10 +1,21 @@
-import pika, os
+import pika, os, logging, sys
 
 RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
 RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
 IMAGE_EXCHANGE = os.environ.get("IMAGE_EXCHANGE")
 IMAGE_ROUTING_KEY = os.environ.get("IMAGE_ROUTING_KEY")
 Q = os.environ.get("IMAGE_QUEUE")
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', 
+                            '%m-%d-%Y %H:%M:%S')
+
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.INFO)
+stdout_handler.setFormatter(formatter)
+
+logger.addHandler(stdout_handler)
 
 def send_to_qu(msg: str):
     conn = pika.BlockingConnection(pika.ConnectionParameters(
@@ -33,7 +44,7 @@ def send_to_qu(msg: str):
             delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
         )
     )
-    print('[client] sent an image path ...')
+    logger.info('[client] Message sent!')
     # close conn to ensure successful delivery
     conn.close()
 

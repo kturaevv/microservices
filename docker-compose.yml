@@ -7,9 +7,10 @@ services:
             context: ./parser
             dockerfile: parser.Dockerfile
         container_name: parser
-        command: ["python3", "main.py"]
+        command: sh -c './wait-for rabbitmq:5672 -- python3 main.py'
+        restart: always
         depends_on:
-            - app
+            - rabbitmq
         networks:
             - basenet
         environment:
@@ -38,8 +39,6 @@ services:
             timeout: 3s
             start_period: 30s
             retries: 3
-        depends_on:
-            - celery
         networks:
             - basenet
         ports:

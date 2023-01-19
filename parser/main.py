@@ -1,5 +1,5 @@
-import requests
-from send_msg import send_to_qu
+import requests, time, logging, sys
+from send_msg import send_to_qu, logger
 
 def fetch_and_save():
     response = requests.get("https://i.imgur.com/ExdKOOz.png")
@@ -9,8 +9,12 @@ def fetch_and_save():
     return file.name
 
 if __name__ == "__main__":
-    print("Fetching image ...")
-    name = fetch_and_save()
-    print("Sending to queue ...")
-    send_to_qu(name)
-    print("Done!")
+    
+    while True:
+        logger.info("Fetching image ...")
+        name = fetch_and_save()
+        logger.info("Sending to queue ...")
+        send_to_qu(name)
+        logger.info("Done!")
+
+        time.sleep(5)
