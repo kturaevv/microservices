@@ -2,22 +2,22 @@ version: '3'
 
 services:
 
-    # parser:
-    #     build:
-    #         context: ./parser
-    #         dockerfile: parser.Dockerfile
-    #     container_name: parser
-    #     command: ["python3", "main.py"]
-    #     depends_on:
-    #         - app
-    #     networks:
-    #         - basenet
-    #     environment:
-    #         - IMAGE_QUEUE
-    #         - IMAGE_ROUTING_KEY
-    #         - IMAGE_EXCHANGE
-    #         - RABBITMQ_HOST
-    #         - RABBITMQ_PORT
+    parser:
+        build:
+            context: ./parser
+            dockerfile: parser.Dockerfile
+        container_name: parser
+        command: ["python3", "main.py"]
+        depends_on:
+            - app
+        networks:
+            - basenet
+        environment:
+            - IMAGE_QUEUE
+            - IMAGE_ROUTING_KEY
+            - IMAGE_EXCHANGE
+            - RABBITMQ_HOST
+            - RABBITMQ_PORT
     
     app:
         build:

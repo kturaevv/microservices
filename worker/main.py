@@ -1,57 +1,63 @@
-import sys, os, pika, logging
+from celery import Celery, bootsteps
+from kombu import Consumer, Exchange, Queue
 
-from .celery_tasks import process_img
+import os, sys, logging, requests
 
-RABBITMQ_HOST=os.environ.get("RABBITMQ_HOST")
+RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
+RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
+
+IMAGE_QUEUE = os.environ.get("IMAGE_QUEUE")
 IMAGE_EXCHANGE = os.environ.get("IMAGE_EXCHANGE")
 IMAGE_ROUTING_KEY = os.environ.get("IMAGE_ROUTING_KEY")
-Q = os.environ.get("IMAGE_QUEUE")
-
-# Connect to RabbitMQ
-conn = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
-channel = conn.channel()
-
-channel.exchange_declare(
-        exchange=IMAGE_EXCHANGE, exchange_type='topic')
-# Create Q if not exists
-channel.queue_declare(queue=Q, durable=True)
-# Bind Q to specific topic
-channel.queue_bind(
-    queue=Q, 
-    exchange=IMAGE_EXCHANGE, 
-    routing_key=IMAGE_ROUTING_KEY
-)
 
 FORMAT = '%(asctime)s - %(levelname)s: %(message)s'
-logging.basicConfig(format=FORMAT, level=logging.INFO)
+logging.basicConfig(format=FORMAT, level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
 
-def main():
-    """ Hand written worker task, forever listening to available msgs from Q. """
+# Declare Kombu Queue
+QUEUE = Queue(
+        IMAGE_QUEUE, 
+        Exchange(IMAGE_EXCHANGE, type='topic', durable=False), 
+        routing_key=IMAGE_ROUTING_KEY
+    )
 
-    def callback(ch, method, properties, body):
-        """ Is triggered on every message receive. """
-        logging.info("[consumer] Received %r" % body)
-        msg = body.decode("utf-8")
-        task = process_img.delay(msg)
+class CustomConsumer(bootsteps.ConsumerStep):
+    """ A proxy, routes messages directly from Message Queue to celery tasks"""
 
-    # indicate LB policy
-    channel.basic_qos(prefetch_count=1)
-    # show RabbitMQ that <callback> is responsible for getting msgs
-    channel.basic_consume(
-        queue=Q,
-        auto_ack=True,
-        on_message_callback=callback
-        )
-    logging.info(' [*] Waiting for messages. To exit press CTRL+C')
-    # Never ending loop for waiting new mesgs
-    channel.start_consuming()
+    def get_consumers(self, channel):
+        return [Consumer(channel,
+                         queues=[QUEUE],
+                         callbacks=[self.handle_message]
+                         )]
 
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        logging.info("Interrupted")
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+    def handle_message(self, body, message):
+        logging.log(f'[consumer] Received {body}')
+        process_img.delay(body)
+        message.ack()
+
+app = Celery(
+    'worker', 
+    backend='rpc://', 
+    broker=f'pyamqp://{RABBITMQ_HOST}:{RABBITMQ_PORT}',
+)
+
+# Add a proxy class to celery application
+app.steps['consumer'].add(CustomConsumer)
+
+# Route messages from specified source to specific task
+app.conf.task_routes = {
+        'worker.main.process_img': {
+            'queue': IMAGE_QUEUE, 
+            'exchange':IMAGE_EXCHANGE, 
+            'routing_key':IMAGE_ROUTING_KEY
+        },
+    }
+
+# Declare Queues for celery to listen to
+app.conf.task_queues = (
+    QUEUE,
+)
+
+@app.task
+def process_img(image_path):
+    logging.info("[task] Received %r" % image_path)
+    requests.get("http://app:8000/")
