@@ -3,6 +3,9 @@ from kombu import Consumer, Exchange, Queue
 
 import os, sys, logging, requests
 
+from .models import BorderCapture, database as database_connection
+
+
 RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST')
 RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT')
 
@@ -58,6 +61,26 @@ app.conf.task_queues = (
 )
 
 @app.task
-def process_img(image_path):
-    logging.info("[task] Received %r" % image_path)
-    requests.get("http://app:8000/")
+def process_img(image_id):
+    # init connection and automatically close when task is completed
+    with database_connection:
+
+        logging.info("[task] Received. ID: %r" % image_id)
+        model = BorderCapture.get(id=image_id)
+
+        # Model image_path is a url to static file
+        response = requests.post("http://api:8000/cars_on_border", data={'image_url':model.image_path})
+        response_amount = response.json()['amount']
+
+        if response.status_code != 200 and isinstance(response_amount, int):
+            logging.info("[task] API FAILED TO PROCESS")
+            logging.info(response)
+            return 0
+        
+        upd = model.update(
+            number_of_cars=response_amount,
+            processed=True
+        )
+        upd.execute()
+        logging.info("[task] DB updated. ID: %r" % model.id)
+        

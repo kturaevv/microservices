@@ -13,7 +13,7 @@ _Note: The microservices are intentionally made as simple as possible to showcas
 ---
 ### Application workflow:
 
---> Parser microservice each minute parses the image from given url, saves it to the filesystem and sends its path to specific RabbitMQ Exchange \ Queue. 
+--> Parser microservice each 5 seconds parses the image from given url, saves it to the filesystem and sends its path to specific RabbitMQ Exchange \ Queue. 
 
 --> From there, Worker microservice consumer listens specified Exchange / Queue and redirects messages further to celery tasks, thereby consuming a message from queue.
 
