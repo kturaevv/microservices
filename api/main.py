@@ -12,7 +12,8 @@ async def post_image(
         image_binary: UploadFile = File(None),
         ):
 
-    if image_binary is None and image_url is None:
+     
+    if not any([image_binary, image_url]):
         raise HTTPException(
             status_code = 422, 
             detail = {
