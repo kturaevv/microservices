@@ -60,7 +60,7 @@ app.conf.task_queues = (
     QUEUE,
 )
 
-@app.task
+@app.task(acks_late=True)
 def process_img(image_id):
     # init connection and automatically close when task is completed
     with database_connection:
