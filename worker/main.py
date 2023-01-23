@@ -69,7 +69,11 @@ def process_img(image_id):
         model = BorderCapture.get(id=image_id)
 
         # Model image_path is a url to static file
-        response = requests.post("http://api:8000/cars_on_border", data={'image_url':model.image_path})
+        response = requests.post(
+            "http://api:8000/cars_on_border", 
+            data={'image_url':model.image_path},
+            # timeout for (connection , read)
+            timeout=(5,30))
         response_amount = response.json()['amount']
 
         if response.status_code != 200 and isinstance(response_amount, int):
